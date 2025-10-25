@@ -2,16 +2,24 @@ from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
+from typing import Optional, List
+
 app = FastAPI()
 
 class Movie(BaseModel):
     id: int
     title: str
-    overiew: str
+    overiew:  str
     year: int
     rating: float
     category: str
 
+class MovieUpdate(BaseModel):
+    title: str
+    overiew:  str
+    year: int
+    rating: float
+    category: str
 
 movies = [
     {
@@ -40,11 +48,11 @@ def homee():
 
 
 @app.get('/movies', tags=['homee'])
-def movie():
+def get_movie() -> List[Movie]:
     return movies
 
 @app.get('/movies/{id}', tags=['Movies_1'])
-def get_movie(id: int):
+def get_movie(id: int) -> Movie:
     for movie in movies:
         if movie['id'] == id:
             return movie
@@ -56,7 +64,7 @@ def get_movie(id: int):
 #(IMPORTANTE PARA QUE ESTE NO SE CONFUNDA CON EL PARAMETROS PONERELE (''/movies/)     es importante diferenciarlo por / para que la quary este despues de /)
 
 @app.get('/movies/', tags=['Movies_1'])
-def get_movie_by_category(category: str, year:int):
+def get_movie_by_category(category: str, year:int)-> Movie:
     for movie in movies:
         if movie['category'] == category:
             return movie
@@ -65,45 +73,27 @@ def get_movie_by_category(category: str, year:int):
 #DATOS QUE QUEREMOS INCERTAR
 
 @app.post('/movies', tags=['Movies_1'])
-def create_movie(id: int = Body(), 
-                 title: str = Body(), 
-                 overiew: str = Body(), 
-                 year: int = Body(), 
-                 rating: float = Body(), 
-                 category: str = Body()
-                 ):
-    #metodo append es para incertar
-    movies.append({
-        'id':id,
-        'title': title,
-        'overiew': overiew,
-        'year': year,
-        'rating': rating,
-        'category': category,
+def create_movie(movie: Movie) -> List[Movie]:
 
-    })
+    #metodo append es para incertar al final de la lista
+    movies.append(movie.model_dump())
+    #lo volvemos un dicicionario apra que pueda ser inseritado dentro de la lista de peliculas 
     return movies
 
 #parametro del tipo pad
 @app.put('/movies/{id}', tags=['Movies_1'])
-def update_movie( id: int,
-                 title: str = Body(), 
-                 overiew: str = Body(), 
-                 year: int = Body(), 
-                 rating: float = Body(), 
-                 category: str = Body()
-                 ):
-    for movie in movies:
-        if movie['id'] == id:
-            movie['title'] = title
-            movie['overiew'] = overiew
-            movie['year'] = year
-            movie['rating'] = rating
-            movie['category'] = category
+def update_movie(id: int, movie: MovieUpdate) -> List[Movie]:
+    for items in movies:
+        if items['id'] == id:
+            items['title'] = movie.title
+            items['overiew'] = movie.overiew
+            items['year'] = movie.year
+            items['rating'] = movie.rating
+            items['category'] = movie.category
     return movies
 
 @app.delete('/movies/{id}', tags=['Movies_1'])
-def delate_movie(id: int):
+def delate_movie(id: int) -> List[Movie]:
     for movie in movies:
         if movie['id'] == id:
             movies.remove(movie)
