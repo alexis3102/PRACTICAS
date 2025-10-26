@@ -1,45 +1,54 @@
 from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from typing import Optional, List
+import datetime
 
 app = FastAPI()
 
 class Movie(BaseModel):
     id: int
     title: str
-    overiew:  str
+    overview:  str
     year: int
     rating: float
     category: str
+
+class MovieCreate(BaseModel):
+    id: int
+    title: str = Field(min_length=5, max_length=15)
+    overview: str = Field(min_length=15, max_length=50)
+    year: int = Field(le=datetime.date.today().year, ge=2000)
+    rating: float = Field(ge=0, le=10)
+    category: str = Field(min_length=5, max_length=20)
+
+    model_config = {
+        'json_schema_extra': {
+            'example': {
+                'id': 1,
+                'title': 'my movie',
+                'overview': 'trata sobre........',
+                'year': 2022,
+                'rating': 5,
+                'category': 'comedy'
+            }
+        }
+    }
+
+# gt (greater than) para numeros mayores que.... +
+# ge (greater than or aqual) osea mayor o igual..... +=
+# lt (less than) menos que..... -
+# le (less than or aqual) menor o igual que..... -= 
 
 class MovieUpdate(BaseModel):
     title: str
-    overiew:  str
+    overview:  str
     year: int
     rating: float
     category: str
 
-movies = [
-    {
-        "id": 1,
-        "title": "tu mama",
-        "overiew": "en un exuberante pantalla",
-        "year": "2009",
-        "rating": 7.8,
-        "category": "accion"
-    },
-
-    {
-        "id": 2,
-        "title": "tu papa",
-        "overiew": "en un  pantalla",
-        "year": "2003",
-        "rating": 7.1,
-        "category": "horror"
-    }
-]
+movies: List[Movie] = []
 
 
 @app.get('/', tags=['homee'])
@@ -49,13 +58,13 @@ def homee():
 
 @app.get('/movies', tags=['homee'])
 def get_movie() -> List[Movie]:
-    return movies
+    return [movie.model_dump() for movie in movies]
 
 @app.get('/movies/{id}', tags=['Movies_1'])
 def get_movie(id: int) -> Movie:
     for movie in movies:
         if movie['id'] == id:
-            return movie
+            return movie.model_dump()
     return[]
 
 # localhost:5000/movies/2 (esto es lo que estamos haciendo)
@@ -67,34 +76,34 @@ def get_movie(id: int) -> Movie:
 def get_movie_by_category(category: str, year:int)-> Movie:
     for movie in movies:
         if movie['category'] == category:
-            return movie
+            return movie.model_dump()
     return[]
 
 #DATOS QUE QUEREMOS INCERTAR
 
 @app.post('/movies', tags=['Movies_1'])
-def create_movie(movie: Movie) -> List[Movie]:
+def create_movie(movie: MovieCreate) -> List[Movie]:
 
     #metodo append es para incertar al final de la lista
-    movies.append(movie.model_dump())
+    movies.append(movie)
     #lo volvemos un dicicionario apra que pueda ser inseritado dentro de la lista de peliculas 
-    return movies
+    return [movie.model_dump() for movie in movies]
 
 #parametro del tipo pad
 @app.put('/movies/{id}', tags=['Movies_1'])
 def update_movie(id: int, movie: MovieUpdate) -> List[Movie]:
-    for items in movies:
-        if items['id'] == id:
-            items['title'] = movie.title
-            items['overiew'] = movie.overiew
-            items['year'] = movie.year
-            items['rating'] = movie.rating
-            items['category'] = movie.category
-    return movies
+    for item in movies:
+        if item['id'] == id:
+            item['title'] = movie.title
+            item['overiew'] = movie.overiew
+            item['year'] = movie.year
+            item['rating'] = movie.rating
+            item['category'] = movie.category
+    return [movie.model_dump() for movie in movies]
 
 @app.delete('/movies/{id}', tags=['Movies_1'])
 def delate_movie(id: int) -> List[Movie]:
     for movie in movies:
         if movie['id'] == id:
             movies.remove(movie)
-    return movies
+    return [movie.model_dump() for movie in movies]
