@@ -70,6 +70,6 @@ def delate_movie(id: int) -> List[Movie]:
     content = [movie.model_dump() for movie in movies]
     return JSONResponse(content=content, status_code=200)
 
-@movie_router.get('/get_file')
+@movie_router.get('/get_file', tags=['Movies_1'])
 def get_file():
     return FileResponse("chica.jpg")
